@@ -86,8 +86,8 @@ export function PeriodSection({
               <SelectValue placeholder="Seleccionar cuenta" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="0191">01910035942135009859</SelectItem>
-              <SelectItem value="0105">01910035942135009859</SelectItem>
+              <SelectItem value="01910035942135009859">01910035942135009859</SelectItem>
+              <SelectItem value="01910035942135009859">01910035942135009859</SelectItem>
             </SelectContent>
           </Select>
         </div>
