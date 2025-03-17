@@ -11,6 +11,8 @@ interface Supplier {
   date: string
   amount: number
   selected: boolean
+  status: string
+  error: string
 }
 
 interface SuppliersTableProps {
@@ -18,9 +20,16 @@ interface SuppliersTableProps {
   toggleSelectAll: (checked: boolean) => void
   toggleSupplier: (id: number, checked: boolean) => void
   calculateTotal: () => number
+  isLoading: boolean
 }
 
-export function SuppliersTable({ suppliers, toggleSelectAll, toggleSupplier, calculateTotal }: SuppliersTableProps) {
+export function SuppliersTable({ 
+  suppliers, 
+  toggleSelectAll, 
+  toggleSupplier, 
+  calculateTotal,
+  isLoading 
+}: SuppliersTableProps) {
   const tableRef = useRef<HTMLDivElement>(null)
 
   // Verificar si todos los proveedores están seleccionados
@@ -43,7 +52,8 @@ export function SuppliersTable({ suppliers, toggleSelectAll, toggleSupplier, cal
           <Checkbox 
             id="selectAll" 
             checked={areAllSelected}
-            onCheckedChange={(checked) => toggleSelectAll(checked === true)} 
+            onCheckedChange={(checked) => toggleSelectAll(checked === true)}
+            disabled={isLoading || suppliers.length === 0}
           />
           <Label htmlFor="selectAll" className="text-xs">
             Todos
@@ -54,12 +64,18 @@ export function SuppliersTable({ suppliers, toggleSelectAll, toggleSupplier, cal
       <div className="border border-gray-300 rounded overflow-hidden">
         <div 
           ref={tableRef}
-          className="h-[200px] overflow-auto"
+          className="h-[200px] overflow-auto relative"
           style={{
             scrollbarWidth: 'thin',
             scrollbarColor: '#888 #f1f1f1'
           }}
         >
+          {isLoading && (
+            <div className="absolute inset-0 bg-gray-100/80 flex items-center justify-center z-50">
+              <div className="text-sm">Cargando datos...</div>
+            </div>
+          )}
+          
           <table className="w-full text-xs">
             <thead className="bg-gray-200 sticky top-0 z-10">
               <tr>
@@ -67,26 +83,41 @@ export function SuppliersTable({ suppliers, toggleSelectAll, toggleSupplier, cal
                 <th className="p-1 border-r border-gray-300">Documento</th>
                 <th className="p-1 border-r border-gray-300">Proveedor</th>
                 <th className="p-1 border-r border-gray-300">Fecha</th>
-                <th className="p-1 border-r border-gray-300">Forma</th>
+                <th className="p-1 border-r border-gray-300">Estado</th>
                 <th className="p-1 text-right">Monto</th>
               </tr>
             </thead>
             <tbody>
-              {suppliers.map((supplier) => (
-                <tr key={supplier.id} className="border-t border-gray-300 hover:bg-gray-100">
-                  <td className="p-1 border-r border-gray-300 text-center">
-                    <Checkbox
-                      checked={supplier.selected}
-                      onCheckedChange={(checked) => toggleSupplier(supplier.id, checked === true)}
-                    />
+              {suppliers.length === 0 && !isLoading ? (
+                <tr>
+                  <td colSpan={6} className="text-center p-4 text-gray-500">
+                    No hay datos disponibles. Seleccione un período y haga clic en "Cargar Datos".
                   </td>
-                  <td className="p-1 border-r border-gray-300">{supplier.document}</td>
-                  <td className="p-1 border-r border-gray-300">{supplier.name}</td>
-                  <td className="p-1 border-r border-gray-300">{supplier.date}</td>
-                  <td className="p-1 border-r border-gray-300"></td>
-                  <td className="p-1 text-right">{supplier.amount.toFixed(4)}</td>
                 </tr>
-              ))}
+              ) : (
+                suppliers.map((supplier) => (
+                  <tr key={supplier.id} className="border-t border-gray-300 hover:bg-gray-100">
+                    <td className="p-1 border-r border-gray-300 text-center">
+                      <Checkbox
+                        checked={supplier.selected}
+                        onCheckedChange={(checked) => toggleSupplier(supplier.id, checked === true)}
+                        disabled={isLoading}
+                      />
+                    </td>
+                    <td className="p-1 border-r border-gray-300">{supplier.document}</td>
+                    <td className="p-1 border-r border-gray-300">{supplier.name}</td>
+                    <td className="p-1 border-r border-gray-300">{supplier.date}</td>
+                    <td className="p-1 border-r border-gray-300">
+                      {supplier.error ? (
+                        <span className="text-red-500">{supplier.error}</span>
+                      ) : (
+                        supplier.status
+                      )}
+                    </td>
+                    <td className="p-1 text-right">{supplier.amount.toFixed(4)}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

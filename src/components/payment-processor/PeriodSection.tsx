@@ -19,6 +19,7 @@ interface PeriodSectionProps {
   setProcessDate: (date: Date) => void
   setAccount: (value: string) => void
   onLoadData: () => void
+  isLoading: boolean
 }
 
 export function PeriodSection({
@@ -31,6 +32,7 @@ export function PeriodSection({
   setProcessDate,
   setAccount,
   onLoadData,
+  isLoading,
 }: PeriodSectionProps) {
   return (
     <div className="col-span-2 border border-gray-300 p-2 rounded">
@@ -44,7 +46,7 @@ export function PeriodSection({
             <Input id="fromDate" value={format(fromDate, "dd-MM-yyyy")} className="text-xs h-8" readOnly />
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-8 w-8 p-0 ml-1">
+                <Button variant="outline" className="h-8 w-8 p-0 ml-1" disabled={isLoading}>
                   <CalendarIcon className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
@@ -62,7 +64,7 @@ export function PeriodSection({
             <Input id="toDate" value={format(toDate, "dd-MM-yyyy")} className="text-xs h-8" readOnly />
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-8 w-8 p-0 ml-1">
+                <Button variant="outline" className="h-8 w-8 p-0 ml-1" disabled={isLoading}>
                   <CalendarIcon className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
@@ -79,14 +81,13 @@ export function PeriodSection({
           <Label htmlFor="account" className="text-xs">
             Cuentas
           </Label>
-          <Select value={account} onValueChange={setAccount}>
+          <Select value={account} onValueChange={setAccount} disabled={isLoading}>
             <SelectTrigger id="account" className="h-8 text-xs">
               <SelectValue placeholder="Seleccionar cuenta" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="0104">0104</SelectItem>
-              <SelectItem value="0105">0105</SelectItem>
-              <SelectItem value="0156">0156</SelectItem>
+              <SelectItem value="0191">01910035942135009859</SelectItem>
+              <SelectItem value="0105">01910035942135009859</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -98,7 +99,7 @@ export function PeriodSection({
             <Input id="processDate" value={format(processDate, "dd-MM-yyyy")} className="text-xs h-8" readOnly />
             <Popover>
               <PopoverTrigger asChild>
-                <Button variant="outline" className="h-8 w-8 p-0 ml-1">
+                <Button variant="outline" className="h-8 w-8 p-0 ml-1" disabled={isLoading}>
                   <CalendarIcon className="h-4 w-4" />
                 </Button>
               </PopoverTrigger>
@@ -119,8 +120,9 @@ export function PeriodSection({
         <Button
           onClick={onLoadData}
           className="w-full bg-gray-200 text-black hover:bg-gray-300 border border-gray-400 text-xs h-8"
+          disabled={isLoading}
         >
-          Cargar Datos
+          {isLoading ? "Cargando datos..." : "Cargar Datos"}
         </Button>
       </div>
     </div>

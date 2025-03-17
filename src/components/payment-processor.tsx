@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { format } from "date-fns"
 import { PeriodSection } from "./payment-processor/PeriodSection"
@@ -16,16 +16,29 @@ interface Supplier {
   selected: boolean
   status: string
   error: string
+  montoSTR: string
+  ctaBanco: string
+  cedula: string
+  descripcion: string
+  referencia: string
+  email: string
+}
+
+// Función para generar espacios en blanco
+const generateSpaces = (length: number): string => {
+  return ' '.repeat(length);
 }
 
 export default function PaymentProcessor() {
   const [fromDate, setFromDate] = useState<Date>(new Date())
   const [toDate, setToDate] = useState<Date>(new Date())
   const [processDate, setProcessDate] = useState<Date>(new Date())
-  const [account, setAccount] = useState<string>("0104")
+  const [account, setAccount] = useState<string>("01910035942135009859")
   const [sequence, setSequence] = useState<string>("")
   const [filePath, setFilePath] = useState<string>("C:\\")
   const [suppliers, setSuppliers] = useState<Supplier[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string>("")
 
   const toggleSelectAll = (checked: boolean) => {
     setSuppliers(
@@ -44,126 +57,110 @@ export default function PaymentProcessor() {
     return suppliers.filter((supplier) => supplier.selected).reduce((sum, supplier) => sum + supplier.amount, 0)
   }
 
-  const handleLoadData = () => {
-    // Aquí simularemos la carga de datos basada en el período seleccionado
-    const randomNum = Math.floor(Math.random() * 1000000).toString().padStart(6, "0")
-    const date = format(new Date(), "ddMM")
-    setSequence(date + randomNum)
+  const handleLoadData = async () => {
+    try {
+      setIsLoading(true)
+      setError("")
 
-    // Simulamos la carga de datos con los proveedores de ejemplo
-    setSuppliers([
-      {
-        id: 1,
-        document: "",
-        name: "INMOBILIARIA FAIDA C.A.",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 575070.2,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
-      {
-        id: 2,
-        document: "",
-        name: "CORPORACION INMOBILIARIA,C.A.",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 52106.04,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
-      {
-        id: 3,
-        document: "",
-        name: "LUIS PUCHADES CUBER",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 34798.2798,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
-      {
-        id: 4,
-        document: "",
-        name: "HERRERA DE BENACERRAF MERCEDES",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 10360.5599,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
-      {
-        id: 5,
-        document: "",
-        name: "HERRERA LUIS FELIPE",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 9799.9998,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
-      {
-        id: 6,
-        document: "",
-        name: "BENACERRAF HERRERA ANDReS",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 796.8796,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
-      {
-        id: 7,
-        document: "",
-        name: "BENACERRAF HERRERA JORGE FORTUN",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 796.8796,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
-      {
-        id: 8,
-        document: "",
-        name: "BENACERRAF DE NOGUERA MERCEDES",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 796.8796,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
-      {
-        id: 9,
-        document: "",
-        name: "CORPORACION TAPAYOSA C.A.",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 147432.6,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
-      {
-        id: 10,
-        document: "",
-        name: "iCORPORACION TAPAYOSA C.A.",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 147432.6,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
-      {
-        id: 11,
-        document: "",
-        name: "bORPORACION TAPAYOSA C.A.",
-        date: format(new Date(), "dd-MM-yyyy HH:mm:ss"),
-        amount: 147432.6,
-        selected: false,
-        status: "pending",
-        error: "",
-      },
+      const fechaDesde = format(fromDate, "yyyy-MM-dd")
+      const fechaHasta = format(toDate, "yyyy-MM-dd")
 
-    ])
+      const url = "http://127.0.0.1:8080/lagunita/crearTXTBancoWS.do"
+      //Í
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json;charset=ISO-8859-1',
+          'Accept': 'application/json',
+          'Accept-Charset': 'UTF-8'
+        },
+        body: JSON.stringify({
+          fechaDesde,
+          fechaHasta
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error(`Error al cargar datos: ${response.statusText}`)
+      }
+
+      // Mostrar información sobre el charset y headers de la respuesta
+      //console.log('Content-Type de la respuesta:', response.headers.get('content-type'));
+      //console.log('Headers de la respuesta:', Object.fromEntries(response.headers.entries()));
+
+      // Decodificar la respuesta como texto y luego como JSON
+      const textData = await response.text()
+      console.log('Datos recibidos (raw):', textData);
+      
+      // Función para decodificar caracteres especiales
+      const decodeSpecialCharacters = (text: string) => {
+        // Convertir el texto a un array de caracteres y procesar cada uno
+        const processedChars = Array.from(text).map(char => {
+          const code = char.charCodeAt(0);
+          // Si el código ASCII es mayor a 127, es un carácter especial
+          if (code > 127) {
+            console.log(`Carácter especial encontrado: "${char}" (código ASCII: ${code})`);
+            return '-';
+          }
+          return char;
+        });
+        return processedChars.join('');
+      };
+
+      console.log('Iniciando decodificación...');
+      const decodedText = decodeSpecialCharacters(textData);
+      console.log('Texto decodificado:', decodedText);
+
+      // Intentar parsear el JSON decodificado
+      const data = JSON.parse(decodedText);
+      console.log('Datos parseados:', data);
+
+      // Generar secuencia
+      const randomNum = Math.floor(Math.random() * 1000000).toString().padStart(6, "0")
+      const date = format(new Date(), "ddMM")
+      setSequence(date + randomNum)
+
+      // Definir la interfaz para los datos recibidos
+      interface SupplierData {
+        id?: number
+        document?: string
+        name?: string
+        date?: string
+        amount?: string | number
+        email?:string
+        montoSTR?:string
+        ctaBanco?:string
+        cedula?:string
+        descripcion?:string
+        referencia?:string
+      }
+
+      // Transformar los datos recibidos al formato esperado
+      const transformedSuppliers = (Array.isArray(data) ? data : []).map((item: SupplierData) => ({
+        id: item.id || Math.random(),
+        document: (item.document || "").trim(),
+        name: item.name || "",
+        date: item.date || format(new Date(), "dd-MM-yyyy HH:mm:ss"),
+        amount: typeof item.amount === 'string' ? parseFloat(item.amount) : (typeof item.amount === 'number' ? item.amount : 0),
+        selected: false,
+        status: "pending",
+        email: item.email || generateSpaces(100),
+        montoSTR: item.montoSTR || "",
+        ctaBanco: item.ctaBanco || "",
+        cedula: item.cedula || "",
+        descripcion: item.descripcion || "",
+        referencia: item.referencia || "",
+        error: ""
+      }))
+
+      setSuppliers(transformedSuppliers)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Error al cargar los datos")
+      console.error("Error al cargar datos:", err)
+      alert("Error al cargar los datos. Por favor intente nuevamente.")
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleProcess = async () => {
@@ -179,16 +176,27 @@ export default function PaymentProcessor() {
       return
     }
 
-    let content = `Fecha de Proceso: ${format(processDate, "dd-MM-yyyy")}\n`
+    let content = `C${selectedSuppliers.length}${format(processDate, "ddMMyyyy")}\n`
     content += `Cuenta: ${account}\n`
-    content += `Secuencia: ${sequence}\n\n`
-    content += "DOCUMENTO\tPROVEEDOR\tFECHA\tMONTO\n"
+    content += `Secuencia: ${sequence}\n`
+    content += `Total Registros Seleccionados: ${selectedSuppliers.length}\n`
+    //content += "DOCUMENTO\tPROVEEDOR\tFECHA\tMONTO\tEMAIL\n"
 
     selectedSuppliers.forEach((supplier) => {
-      content += `${supplier.document}\t${supplier.name}\t${supplier.date}\t${supplier.amount.toFixed(4)}\n`
+      // Extraer los componentes de la fecha del string (asumiendo formato dd-MM-yyyy HH:mm:ss)
+      const [datePart] = supplier.date.split(' '); // Separar la fecha de la hora
+      const [day, month, year] = datePart.split('-').map(Number);
+      
+      // Crear la fecha usando los componentes
+      const date = new Date(year, month - 1, day); // month - 1 porque los meses en JS van de 0-11
+      const formattedDate = format(date, "ddMMyyyy");
+      
+      content += `D${formattedDate}${account}${supplier.ctaBanco}${supplier.montoSTR}${supplier.descripcion}${supplier.cedula}${supplier.name}${supplier.email}${supplier.referencia}\n`
     })
-
+//content += `${supplier.document}${supplier.name}\t${formattedDate}${supplier.montoSTR}${supplier.email}\n`
     content += `\nTOTAL: ${calculateTotal().toFixed(4)} BSS`
+    content += `\nC000020000255525512510000000000SNN00`
+    content += `\nC${selectedSuppliers.length}\n`
 
     try {
       // Crear el nombre del archivo
@@ -196,15 +204,15 @@ export default function PaymentProcessor() {
       const fullPath = `${filePath}${fileName}`
 
       // Crear el Blob y guardarlo
-      const blob = new Blob([content], { type: "text/plain" })
-      const a = document.createElement("a")
+    const blob = new Blob([content], { type: "text/plain" })
+    const a = document.createElement("a")
       a.href = URL.createObjectURL(blob)
       a.download = fileName
       // Establecer el atributo download con la ruta completa
       a.setAttribute("download", fullPath)
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
       URL.revokeObjectURL(a.href)
 
       alert(`Archivo generado exitosamente en: ${fullPath}`)
@@ -212,6 +220,35 @@ export default function PaymentProcessor() {
       alert("Error al generar el archivo: " + error)
     }
   }
+
+  const handleExit = () => {
+    // Usar una variable para evitar acceso directo a window durante SSR
+    const shouldExit = typeof window !== 'undefined' && window.confirm('¿Está seguro que desea salir de la aplicación?');
+    if (shouldExit) {
+      // Redirigir a una URL en blanco o cerrar si es una ventana popup
+      if (window.opener) {
+        window.close();
+      } else {
+        window.location.href = 'about:blank';
+      }
+    }
+  };
+
+  // Manejar el evento de cierre de ventana
+  useEffect(() => {
+    const handleWindowClose = (e: BeforeUnloadEvent) => {
+      const message = '¿Está seguro que desea salir de la aplicación?';
+      e.preventDefault();
+      e.returnValue = message;
+      return message;
+    };
+
+    window.addEventListener('beforeunload', handleWindowClose);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleWindowClose);
+    };
+  }, []);
 
   return (
     <div className="bg-gray-100 border border-gray-300 rounded-md shadow-md w-full max-w-4xl">
@@ -242,7 +279,10 @@ export default function PaymentProcessor() {
           <button className="w-5 h-5 flex items-center justify-center border border-gray-400 bg-gray-200 text-xs">
             □
           </button>
-          <button className="w-5 h-5 flex items-center justify-center border border-gray-400 bg-gray-200 text-xs">
+          <button 
+            onClick={handleExit}
+            className="w-5 h-5 flex items-center justify-center border border-gray-400 bg-gray-200 text-xs hover:bg-red-500 hover:text-white"
+          >
             ×
           </button>
         </div>
@@ -259,11 +299,13 @@ export default function PaymentProcessor() {
           setProcessDate={setProcessDate}
           setAccount={setAccount}
           onLoadData={handleLoadData}
+          isLoading={isLoading}
         />
 
         <div className="border border-gray-300 p-2 rounded flex flex-col">
           <div className="text-xs font-semibold mb-2">Secuencia generada:</div>
           <div className="text-xs">{sequence || "No se ha generado secuencia"}</div>
+          {error && <div className="text-xs text-red-500 mt-1">{error}</div>}
         </div>
 
         <DataSourceSection filePath={filePath} setFilePath={setFilePath} />
@@ -273,17 +315,26 @@ export default function PaymentProcessor() {
           toggleSelectAll={toggleSelectAll}
           toggleSupplier={toggleSupplier}
           calculateTotal={calculateTotal}
+          isLoading={isLoading}
         />
 
         <div className="col-span-3 mt-2">
           <div className="flex justify-between">
-            <Button
-              onClick={handleProcess}
-              className="bg-gray-200 text-black hover:bg-gray-300 border border-gray-400 text-xs h-8"
-              disabled={suppliers.length === 0}
-            >
-              Procesar
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={handleProcess}
+                className="bg-gray-200 text-black hover:bg-gray-300 border border-gray-400 text-xs h-8"
+                disabled={suppliers.length === 0}
+              >
+                Procesar
+              </Button>
+              <Button
+                onClick={handleExit}
+                className="bg-red-500 text-white hover:bg-red-600 border border-red-600 text-xs h-8"
+              >
+                Salir
+              </Button>
+            </div>
             <div className="w-full ml-2 h-8 bg-gray-200 border border-gray-300 rounded"></div>
           </div>
         </div>
