@@ -54,9 +54,16 @@ export default function PaymentProcessor() {
   }
 
   const calculateTotal = () => {
-    return suppliers.filter((supplier) => supplier.selected).reduce((sum, supplier) => sum + supplier.amount, 0)
+    const total = suppliers.filter((supplier) => supplier.selected)
+      .reduce((sum, supplier) => sum + (supplier.montoSTR ? parseFloat(supplier.montoSTR) : 0), 0);
+    return total ;
   }
 
+  /*
+  const calculateTotalaes = () => {
+    return suppliers.filter((supplier) => supplier.selected).reduce((sum, supplier) => sum + supplier.montoSTRamount, 0)
+  }
+*/
   const handleLoadData = async () => {
     try {
       setIsLoading(true)
@@ -176,10 +183,15 @@ export default function PaymentProcessor() {
       return
     }
 
-    let content = `C${selectedSuppliers.length}${format(processDate, "ddMMyyyy")}\n`
-    content += `Cuenta: ${account}\n`
-    content += `Secuencia: ${sequence}\n`
-    content += `Total Registros Seleccionados: ${selectedSuppliers.length}\n`
+    // Formatear el total con 15 dígitos y los últimos 2 como decimales
+    const totalAmount = calculateTotal() ; // Multiplicar por 100 para manejar los decimales
+    const totalStr = totalAmount.toFixed(0).padStart(15, '0'); // Ya no necesitamos .toFixed(2) porque ya manejamos los decimales
+    
+    
+    let content = `C${selectedSuppliers.length.toString().padStart(5, '0')}${totalStr}${sequence}SNN00\n`
+    //content += `Cuenta: ${account}\n`
+    //content += `Secuencia: ${sequence}\n`
+    //content += `Total Registros Seleccionados: ${selectedSuppliers.length.toString().padStart(5, '0')}\n`
     //content += "DOCUMENTO\tPROVEEDOR\tFECHA\tMONTO\tEMAIL\n"
 
     selectedSuppliers.forEach((supplier) => {
@@ -193,10 +205,12 @@ export default function PaymentProcessor() {
       
       content += `D${formattedDate}${account}${supplier.ctaBanco}${supplier.montoSTR}${supplier.descripcion}${supplier.cedula}${supplier.name}${supplier.email}${supplier.referencia}\n`
     })
-//content += `${supplier.document}${supplier.name}\t${formattedDate}${supplier.montoSTR}${supplier.email}\n`
-    content += `\nTOTAL: ${calculateTotal().toFixed(4)} BSS`
-    content += `\nC000020000255525512510000000000SNN00`
-    content += `\nC${selectedSuppliers.length}\n`
+
+    
+    
+    //content += `\nTOTAL: ${totalStr} BSS`
+   // content += `\nC000020000255525512510000000000SNN00`
+   //content += `\nC${selectedSuppliers.length.toString().padStart(5, '0')}\n`
 
     try {
       // Crear el nombre del archivo

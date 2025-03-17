@@ -91,7 +91,7 @@ export function SuppliersTable({
               {suppliers.length === 0 && !isLoading ? (
                 <tr>
                   <td colSpan={6} className="text-center p-4 text-gray-500">
-                    No hay datos disponibles. Seleccione un período y haga clic en "Cargar Datos".
+                    No hay datos disponibles. Seleccione un período y haga clic en Cargar Datos.
                   </td>
                 </tr>
               ) : (
@@ -134,7 +134,9 @@ export function SuppliersTable({
         </div>
         <div className="text-right">
           <div className="text-sm font-bold">Total:</div>
-          <div className="text-lg font-bold">{calculateTotal().toFixed(4)} BSS</div>
+          <div className="text-lg font-bold">
+            {(calculateTotal()/100).toFixed(2).replace('.', ',')} BSS
+          </div>
         </div>
       </div>
     </div>
